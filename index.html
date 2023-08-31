@@ -8,9 +8,23 @@
         <table>
             <tr>
                 <td>
-                    <table id="registers">
+                    <table>
                         <tr>
-                            <td>IP</td><td><input id="ip" value="0" /></td>
+                            <td height="100%">
+                                <svg height="100%" width="50" id="ipLineSvg">
+                                    <polyline id="ipLine"
+                                        points="50,10 5,10 5,50 40,50"
+                                        style="fill:none;stroke:black;stroke-width:3" />
+                                    <polygon id="ipLineArrowhead" points="50,50 40,45 40,55" style="fill:black" />
+                                </svg>
+                            </td>
+                            <td>
+                                <table id="registers">
+                                    <tr>
+                                        <td>IP</td><td><input id="ip" value="0" /></td>
+                                    </tr>
+                                </table>
+                            </td>
                         </tr>
                     </table>
                 </td>
