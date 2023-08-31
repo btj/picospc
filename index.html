@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="index.js"></script>
+    </head>
+    <body onload="init()">
+        <center><select id="examples"><option></option></select></center>
+        <table>
+            <tr>
+                <td>
+                    <table id="registers">
+                        <tr>
+                            <td>IP</td><td><input id="ip" value="0" /></td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <button id="step" onclick="step()">Step</button>
+                    <table>
+                        <tr>
+                            <th>Instruction</th>
+                            <th>Meaning</th>
+                            <th>Name</th>
+                        </tr>
+                        <tr>
+                            <td>1, A, B</td>
+                            <td>M[A] ← B; IP ← IP + 3</td>
+                            <td>LoadConstant</td>
+                        </tr>
+                        <tr>
+                            <td>2, A, B</td>
+                            <td>M[A] ← M[A] + M[B]; IP ← IP + 3</td>
+                            <td>Add</td>
+                        </tr>
+                        <tr>
+                            <td>3, A, B</td>
+                            <td>M[A] ← M[A] - M[B]; IP ← IP + 3</td>
+                            <td>Subtract</td>
+                        </tr>
+                        <tr>
+                            <td>4, A</td>
+                            <td>M[A] ← M[A] + 1; IP ← IP + 2</td>
+                            <td>Increment</td>
+                        </tr>
+                        <tr>
+                            <td>5, A</td>
+                            <td>M[A] ← M[A] - 1; IP ← IP + 2</td>
+                            <td>Decrement</td>
+                        </tr>
+                        <tr>
+                            <td>6, A, B</td>
+                            <td>if M[A] = 0 then IP ← B else IP ← IP + 3</td>
+                            <td>IfZeroGoTo</td>
+                        </tr>
+                        <tr>
+                            <td>7, A, B</td>
+                            <td>if M[A] ≠ 0 then IP ← B else IP ← IP + 3</td>
+                            <td>IfNonzeroGoTo</td>
+                        </tr>
+                        <tr>
+                            <td>8, A</td>
+                            <td>IP ← A</td>
+                            <td>GoTo</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
