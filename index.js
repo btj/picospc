@@ -41,6 +41,20 @@ function step() {
     }
 }
 
+function decode(address) {
+    switch (read(address)) {
+        case 1: return "M[" + read(address + 1) + "] ← " + read(address + 2) + "; IP ← IP + 3";
+        case 2: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] + M[" + read(address + 2) + "]; IP ← IP + 3";
+        case 3: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] - M[" + read(address + 2) + "]; IP ← IP + 3";
+        case 4: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] + 1; IP ← IP + 2";
+        case 5: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] - 1; IP ← IP + 2";
+        case 6: return "if M[" + read(address + 1) + "] = 0 then IP ← " + read(address + 2) + " else IP ← IP + 3";
+        case 7: return "if M[" + read(address + 1) + "] ≠ 0 then IP ← " + read(address + 2) + " else IP ← IP + 3";
+        case 8: return "IP ← " + read(address + 1);
+        default: return "(not a valid instruction)";
+    }
+}
+
 const examples = [
     {
         title: "Compute M[0] times M[1] in M[2]",
@@ -56,7 +70,15 @@ function init() {
     for (let i = 0; i < memorySize; i++) {
         const input = h('input', {value: '0'});
         memory.push(input);
-        registersTable.appendChild(h('tr', [h('td', ['M[' + i + ']']), h('td', [input])]));
+        const interpretationSelect = h('select', [new Option(), new Option('interpreted as an instruction means')]);
+        const interpretationSpan = h('span');
+        interpretationSelect.onchange = () => {
+            switch (interpretationSelect.selectedIndex) {
+                case 0: interpretationSpan.innerText = '';
+                case 1: interpretationSpan.innerText = decode(i);
+            }
+        };
+        registersTable.appendChild(h('tr', [h('td', ['M[' + i + ']']), h('td', [input, interpretationSelect, interpretationSpan])]));
     }
     const examplesSelect = document.getElementById('examples');
     for (let example_ of examples) {
