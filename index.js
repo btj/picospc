@@ -131,13 +131,39 @@ const examples = [
     }
 ];
 
+const memorySize = 30;
+
+function setState(state) {
+    setIp(state.ip);
+    for (let i = 0; i < state.memory.length; i++) {
+        write(i, state.memory[i]);
+    }
+    for (let i = state.memory.length; i < memorySize; i++)
+        write(i, 0);
+    for (let i = 0; i < state.memory.length; i++) {
+        if (state.interpretations[i] == 'I') {
+            interpretationSelects[i].selectedIndex = 1;
+            interpretationSelects[i].style.visibility = 'visible';
+            interpretationSpans[i].innerText = decode(i);
+        } else {
+            interpretationSelects[i].selectedIndex = 0;
+            interpretationSelects[i].style.visibility = 'hidden';
+            interpretationSpans[i].innerText = '';
+        }
+    }
+    for (let i = state.memory.length; i < memorySize; i++) {
+        interpretationSelects[i].selectedIndex = 0;
+        interpretationSelects[i].style.visibility = 'hidden';
+        interpretationSpans[i].innerText = '';
+    }
+}
+
 function init() {
     ip = document.getElementById('ip');
     ipLine = document.getElementById('ipLine');
     ipLineArrowhead = document.getElementById('ipLineArrowhead');
     ipLineSvg = document.getElementById('ipLineSvg');
     const registersTable = document.getElementById('registers');
-    const memorySize = 30;
     for (let i = 0; i < memorySize; i++) {
         const input = h('input', {value: '0'});
         memory.push(input);
@@ -193,3 +219,28 @@ function init() {
     };
 }
 
+async function save() {
+    const memoryContents = memory.map(elem => elem.value);
+    const interpretations = interpretationSelects.map(elem => elem.selectedIndex == 1 ? 'I' : ' ').join('');
+    await navigator.clipboard.writeText(JSON.stringify({ip: +ip.value, memory: memoryContents, interpretations}));
+    alert('Machine state copied to clipboard.');
+}
+
+function load() {
+    const jsonArea = document.getElementById('json');
+    if (jsonArea.style.display == 'none' || jsonArea.value == '') {
+        jsonArea.style.display = 'block';
+        alert('Please paste your machine state into the text area and click Load again.');
+    } else {
+        let state = null;
+        try {
+            state = JSON.parse(jsonArea.value);
+        } catch (e) {
+            alert('Malformed machine state');
+            return;
+        }
+        setState(state);
+        jsonArea.value = '';
+        jsonArea.style.display = 'none';
+    }
+}
