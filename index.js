@@ -71,6 +71,8 @@ function step() {
         case 6: if (read(read(+ip.value + 1)) == 0) setIp(read(+ip.value + 2)); else setIp(+ip.value + 3); break;
         case 7: if (read(read(+ip.value + 1)) != 0) setIp(read(+ip.value + 2)); else setIp(+ip.value + 3); break;
         case 8: setIp(read(+ip.value + 1)); break;
+        case 9: write(read(+ip.value + 1), read(read(read(+ip.value + 2)))); setIp(+ip.value + 3); break;
+        case 10: write(read(read(+ip.value + 1)), read(read(+ip.value + 2))); setIp(+ip.value + 3); break;
     }
 }
 
@@ -84,6 +86,8 @@ function decode(address) {
         case 6: return "if M[" + read(address + 1) + "] = 0 then IP ← " + read(address + 2) + " else IP ← IP + 3";
         case 7: return "if M[" + read(address + 1) + "] ≠ 0 then IP ← " + read(address + 2) + " else IP ← IP + 3";
         case 8: return "IP ← " + read(address + 1);
+        case 9: return "M[" + read(address + 1) + "] ← M[M[" + read(address + 2) + "]]; IP ← IP + 3";
+        case 10: return "M[M[" + read(address + 1) + "]] ← M[" + read(address + 2) + "]; IP ← IP + 3";
         default: return "(not a valid instruction)";
     }
 }
@@ -112,6 +116,18 @@ const examples = [
         ip: 3,
         memory: [5, 3, 0, 7, 0, 7, 0, 2, 2, 1, 5, 0, 8, 3, 0],
         interpretations: '   I  II  I I  '
+    },
+    {
+        title: "Sum up M[20..27] into M[3]",
+        ip: 4,
+        memory: [20, 8, 0, 0, 7, 1, 8, 0, 9, 3, 0, 2, 2, 3, 4, 0, 5, 1, 8, 4, 1, 2, 4, 8, 16, 32, 64, 128],
+        interpretations: '    I  II  I  I I I        '
+    },
+    {
+        title: "Increment M[21..28]",
+        ip: 3,
+        memory: [21, 8, 0, 7, 1, 7, 0, 9, 2, 0, 4, 2, 10, 0, 2, 4, 0, 5, 1, 8, 3, 10, 20, 30, 40, 50, 60, 70, 80],
+        interpretations: '   I  II  I I  I I I         '
     }
 ];
 

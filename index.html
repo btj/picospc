@@ -86,6 +86,16 @@
                                         <td>IP ← A</td>
                                         <td>GoTo</td>
                                     </tr>
+                                    <tr>
+                                        <td>9, A, B</td>
+                                        <td>M[A] ← M[M[B]]; IP ← IP + 3</td>
+                                        <td>Load</td>
+                                    </tr>
+                                    <tr>
+                                        <td>10, A, B</td>
+                                        <td>M[M[A]] ← M[B]; IP ← IP + 3</td>
+                                        <td>Store</td>
+                                    </tr>
                                 </table>
                             </td>
                         </tr>
