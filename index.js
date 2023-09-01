@@ -132,8 +132,9 @@ function init() {
             if (interpretationSelect.selectedIndex == 0)
                 interpretationSelect.style.visibility = 'hidden';
         };
-        registersTable.appendChild(h('tr', [h('td', ['M[' + i + ']']), interpretationCell]));
+        registersTable.appendChild(h('tr', [h('td', {align: 'right'}, ['M[' + i + ']']), interpretationCell]));
     }
+    setIp(0);
     const examplesSelect = document.getElementById('examples');
     for (let example_ of examples) {
         const example = example_;
