@@ -55,6 +55,9 @@ function setIp(address) {
     addPoints(ipLine.points, [50, ipY, 5, ipY, 5, memY, 40, memY]);
     ipLineArrowhead.points.clear();
     addPoints(ipLineArrowhead.points, [50, memY, 40, memY - 5, 40, memY + 5]);
+
+    if (ipLineSvgRect.bottom - ipLineSvgRect.top < memY + 5)
+        ipLineSvg.height.baseVal.newValueSpecifiedUnits(5, memY + 5);
 }
 
 function step() {
