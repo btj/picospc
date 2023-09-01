@@ -87,6 +87,12 @@ function decode(address) {
 
 const examples = [
     {
+        title: '',
+        ip: 0,
+        memory: [],
+        interpretations: ''
+    },
+    {
         title: "Increment M[0] five times",
         ip: 1,
         memory: [0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 0],
@@ -142,7 +148,7 @@ function init() {
         examplesSelect.appendChild(option);
     }
     examplesSelect.onchange = () => {
-        const example = examples[examplesSelect.selectedIndex - 1];
+        const example = examples[examplesSelect.selectedIndex];
         setIp(example.ip);
         for (let i = 0; i < example.memory.length; i++) {
             write(i, example.memory[i]);
