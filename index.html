@@ -1,82 +1,93 @@
+<!DOCTYPE HTML>
 <html>
     <head>
         <meta charset="utf-8">
         <script src="index.js"></script>
     </head>
-    <body onload="init()">
-        <center>Examples: <select id="examples"></select></center>
-        <table width="100%">
+    <body onload="init()" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0">
+        <table style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; width: 100%; height: 100%; max-height: 100%">
             <tr>
-                <td rowspan="2">
-                    <table>
+                <td><center>Examples: <select id="examples"></select></center></td>
+            </tr>
+            <tr height="100%">
+                <td>
+                    <table width="100%" height="100%">
                         <tr>
-                            <td height="100%" style="vertical-align: top">
-                                <svg height="100%" width="50" id="ipLineSvg">
-                                    <polyline id="ipLine"
-                                        points="50,10 5,10 5,50 40,50"
-                                        style="fill:none;stroke:black;stroke-width:3" />
-                                    <polygon id="ipLineArrowhead" points="50,50 40,45 40,55" style="fill:black" />
-                                </svg>
+                            <td rowspan="2">
+                                <div style="overflow: auto; min-height: 0; height: 100%; max-height: 100%">
+                                    <table>
+                                        <tr>
+                                            <td height="100%" style="vertical-align: top">
+                                                <svg height="100%" width="50" id="ipLineSvg">
+                                                    <polyline id="ipLine"
+                                                        points="50,10 5,10 5,50 40,50"
+                                                        style="fill:none;stroke:black;stroke-width:3" />
+                                                    <polygon id="ipLineArrowhead" points="50,50 40,45 40,55" style="fill:black" />
+                                                </svg>
+                                            </td>
+                                            <td>
+                                                <table id="registers">
+                                                    <tr>
+                                                        <td align="right">IP</td><td><input id="ip" value="0" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
                             </td>
-                            <td>
-                                <table id="registers">
+                            <td align="right"><button id="step" onclick="step()">Step</button></td>
+                        </tr>
+                        <tr>
+                            <td align="right" style="vertical-align: bottom">
+                                <table border="1" style="border-collapse: collapse">
                                     <tr>
-                                        <td align="right">IP</td><td><input id="ip" value="0" /></td>
+                                        <th>Instruction</th>
+                                        <th>Meaning</th>
+                                        <th>Name</th>
+                                    </tr>
+                                    <tr>
+                                        <td>1, A, B</td>
+                                        <td>M[A] ← B; IP ← IP + 3</td>
+                                        <td>LoadConstant</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2, A, B</td>
+                                        <td>M[A] ← M[A] + M[B]; IP ← IP + 3</td>
+                                        <td>Add</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3, A, B</td>
+                                        <td>M[A] ← M[A] - M[B]; IP ← IP + 3</td>
+                                        <td>Subtract</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4, A</td>
+                                        <td>M[A] ← M[A] + 1; IP ← IP + 2</td>
+                                        <td>Increment</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5, A</td>
+                                        <td>M[A] ← M[A] - 1; IP ← IP + 2</td>
+                                        <td>Decrement</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6, A, B</td>
+                                        <td>if M[A] = 0 then IP ← B else IP ← IP + 3</td>
+                                        <td>IfZeroGoTo</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7, A, B</td>
+                                        <td>if M[A] ≠ 0 then IP ← B else IP ← IP + 3</td>
+                                        <td>IfNonzeroGoTo</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8, A</td>
+                                        <td>IP ← A</td>
+                                        <td>GoTo</td>
                                     </tr>
                                 </table>
                             </td>
-                        </tr>
-                    </table>
-                </td>
-                <td align="right"><button id="step" onclick="step()">Step</button></td>
-            </tr>
-            <tr>
-                <td align="right" style="vertical-align: bottom">
-                    <table border="1" style="border-collapse: collapse">
-                        <tr>
-                            <th>Instruction</th>
-                            <th>Meaning</th>
-                            <th>Name</th>
-                        </tr>
-                        <tr>
-                            <td>1, A, B</td>
-                            <td>M[A] ← B; IP ← IP + 3</td>
-                            <td>LoadConstant</td>
-                        </tr>
-                        <tr>
-                            <td>2, A, B</td>
-                            <td>M[A] ← M[A] + M[B]; IP ← IP + 3</td>
-                            <td>Add</td>
-                        </tr>
-                        <tr>
-                            <td>3, A, B</td>
-                            <td>M[A] ← M[A] - M[B]; IP ← IP + 3</td>
-                            <td>Subtract</td>
-                        </tr>
-                        <tr>
-                            <td>4, A</td>
-                            <td>M[A] ← M[A] + 1; IP ← IP + 2</td>
-                            <td>Increment</td>
-                        </tr>
-                        <tr>
-                            <td>5, A</td>
-                            <td>M[A] ← M[A] - 1; IP ← IP + 2</td>
-                            <td>Decrement</td>
-                        </tr>
-                        <tr>
-                            <td>6, A, B</td>
-                            <td>if M[A] = 0 then IP ← B else IP ← IP + 3</td>
-                            <td>IfZeroGoTo</td>
-                        </tr>
-                        <tr>
-                            <td>7, A, B</td>
-                            <td>if M[A] ≠ 0 then IP ← B else IP ← IP + 3</td>
-                            <td>IfNonzeroGoTo</td>
-                        </tr>
-                        <tr>
-                            <td>8, A</td>
-                            <td>IP ← A</td>
-                            <td>GoTo</td>
                         </tr>
                     </table>
                 </td>
