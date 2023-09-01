@@ -87,6 +87,12 @@ function decode(address) {
 
 const examples = [
     {
+        title: "Increment M[0] five times",
+        ip: 1,
+        memory: [0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 0],
+        interpretations: ' I I I I I I'
+    },
+    {
         title: "Increment M[0] forever",
         ip: 1,
         memory: [0, 4, 0, 8, 1],

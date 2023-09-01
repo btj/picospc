@@ -5,9 +5,9 @@
     </head>
     <body onload="init()">
         <center><select id="examples"><option></option></select></center>
-        <table>
+        <table width="100%">
             <tr>
-                <td>
+                <td rowspan="2">
                     <table>
                         <tr>
                             <td height="100%">
@@ -28,9 +28,11 @@
                         </tr>
                     </table>
                 </td>
-                <td>
-                    <button id="step" onclick="step()">Step</button>
-                    <table>
+                <td align="right"><button id="step" onclick="step()">Step</button></td>
+            </tr>
+            <tr>
+                <td align="right" style="vertical-align: bottom">
+                    <table border="1" style="border-collapse: collapse">
                         <tr>
                             <th>Instruction</th>
                             <th>Meaning</th>
