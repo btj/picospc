@@ -38,6 +38,7 @@
                             </td>
                             <td align="right">
                                 <button id="step" onclick="step()">Step</button>
+                                <div id="output"></div>
                                 <textarea style="display: none" id="json"></textarea>
                             </td>
                         </tr>
@@ -98,6 +99,21 @@
                                         <td>10, A, B</td>
                                         <td>M[M[A]] ← M[B]; IP ← IP + 3</td>
                                         <td>Store</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11, A, B, C</td>
+                                        <td>M[A] ← M[M[B] + C]; IP ← IP + 4</td>
+                                        <td>LoadField</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12, A, B, C</td>
+                                        <td>M[M[A] + B] ← M[C]; IP ← IP + 4</td>
+                                        <td>StoreField</td>
+                                    </tr>
+                                    <tr>
+                                        <td>13, A</td>
+                                        <td>print M[A]; IP ← IP + 2</td>
+                                        <td>Print</td>
                                     </tr>
                                 </table>
                             </td>

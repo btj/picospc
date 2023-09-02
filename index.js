@@ -60,6 +60,14 @@ function setIp(address) {
         ipLineSvg.height.baseVal.newValueSpecifiedUnits(5, memY + 5);
 }
 
+function print(text) {
+    const output = document.getElementById('output');
+    if (output.innerText == '')
+        output.innerText = 'Output: ' + text;
+    else
+        output.innerText += ', ' + text;
+}
+
 function step() {
     const opCode = read(+ip.value);
     switch (opCode) {
@@ -73,6 +81,9 @@ function step() {
         case 8: setIp(read(+ip.value + 1)); break;
         case 9: write(read(+ip.value + 1), read(read(read(+ip.value + 2)))); setIp(+ip.value + 3); break;
         case 10: write(read(read(+ip.value + 1)), read(read(+ip.value + 2))); setIp(+ip.value + 3); break;
+        case 11: write(read(+ip.value + 1), read(read(read(+ip.value + 2)) + read(+ip.value + 3))); setIp(+ip.value + 4); break;
+        case 12: write(read(read(+ip.value + 1)) + read(+ip.value + 2), read(read(+ip.value + 3))); setIp(+ip.value + 4); break;
+        case 13: print(read(read(+ip.value + 1))); setIp(+ip.value + 2); break;
     }
 }
 
@@ -88,6 +99,9 @@ function decode(address) {
         case 8: return "IP ← " + read(address + 1);
         case 9: return "M[" + read(address + 1) + "] ← M[M[" + read(address + 2) + "]]; IP ← IP + 3";
         case 10: return "M[M[" + read(address + 1) + "]] ← M[" + read(address + 2) + "]; IP ← IP + 3";
+        case 11: return "M[" + read(address + 1) + "] ← M[M[" + read(address + 2) + "] + " + read(address + 3) + "]; IP ← IP + 4";
+        case 12: return "M[M[" + read(address + 1) + "] + " + read(address + 2) + "] ← M[" + read(address + 3) + "]; IP ← IP + 4";
+        case 13: return "print M[" + read(address + 1) + "]; IP ← IP + 2";
         default: return "(not a valid instruction)";
     }
 }
@@ -128,6 +142,12 @@ const examples = [
         ip: 3,
         memory: [21, 8, 0, 7, 1, 7, 0, 9, 2, 0, 4, 2, 10, 0, 2, 4, 0, 5, 1, 8, 3, 10, 20, 30, 40, 50, 60, 70, 80],
         interpretations: '   I  II  I I  I I I         '
+    },
+    {
+        title: "Print the linked list at M[0]",
+        ip: 2,
+        memory: [20, 0, 7, 0, 6, 0, 9, 1, 0, 13, 1, 11, 0, 0, 1, 8, 2, 20, 24, 0, 10, 17, 40, 26, 30, 22, 50, 0],
+        interpretations: '  I  II  I I   I            '
     }
 ];
 
