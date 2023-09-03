@@ -175,6 +175,10 @@ function setState(state) {
             interpretationSelects[i].selectedIndex = 1;
             interpretationSelects[i].style.visibility = 'visible';
             interpretationSpans[i].innerText = decode(i);
+        } else if (state.interpretations[i] == 'A') {
+            interpretationSelects[i].selectedIndex = 2;
+            interpretationSelects[i].style.visibility = 'visible';
+            interpretationSpans[i].innerText = '(see arrow)';
         } else {
             interpretationSelects[i].selectedIndex = 0;
             interpretationSelects[i].style.visibility = 'hidden';
@@ -197,7 +201,11 @@ function init() {
     for (let i = 0; i < memorySize; i++) {
         const input = h('input', {value: '0'});
         memory.push(input);
-        const interpretationSelect = h('select', {style: 'visibility: hidden'}, [new Option(), new Option('interpreted as an instruction means')]);
+        const interpretationSelect = h('select', {style: 'visibility: hidden'}, [
+            new Option(),
+            new Option('interpreted as an instruction means'),
+            new Option('interpreted as an address means')
+        ]);
         interpretationSelects.push(interpretationSelect);
         const interpretationSpan = h('span');
         interpretationSpans.push(interpretationSpan);
@@ -205,6 +213,7 @@ function init() {
             switch (interpretationSelect.selectedIndex) {
                 case 0: interpretationSpan.innerText = ''; break;
                 case 1: interpretationSpan.innerText = decode(i); break;
+                case 2: interpretationSpan.innerText = '(see arrow)';
             }
         };
         const interpretationCell = h('td', [input, interpretationSelect, interpretationSpan]);
@@ -224,34 +233,16 @@ function init() {
     }
     examplesSelect.onchange = () => {
         const example = examples[examplesSelect.selectedIndex];
-        setIp(example.ip);
-        for (let i = 0; i < example.memory.length; i++) {
-            write(i, example.memory[i]);
-        }
-        for (let i = example.memory.length; i < memorySize; i++)
-            write(i, 0);
-        for (let i = 0; i < example.memory.length; i++) {
-            if (example.interpretations[i] == 'I') {
-                interpretationSelects[i].selectedIndex = 1;
-                interpretationSelects[i].style.visibility = 'visible';
-                interpretationSpans[i].innerText = decode(i);
-            } else {
-                interpretationSelects[i].selectedIndex = 0;
-                interpretationSelects[i].style.visibility = 'hidden';
-                interpretationSpans[i].innerText = '';
-            }
-        }
-        for (let i = example.memory.length; i < memorySize; i++) {
-            interpretationSelects[i].selectedIndex = 0;
-            interpretationSelects[i].style.visibility = 'hidden';
-            interpretationSpans[i].innerText = '';
-        }
+        setState(example);
     };
 }
 
 async function save() {
     const memoryContents = memory.map(elem => elem.value);
-    const interpretations = interpretationSelects.map(elem => elem.selectedIndex == 1 ? 'I' : ' ').join('');
+    const interpretations = interpretationSelects.map(elem =>
+        elem.selectedIndex == 1 ? 'I' :
+        elem.selectedIndex == 2 ? 'A' :
+        ' ').join('');
     await navigator.clipboard.writeText(JSON.stringify({ip: +ip.value, memory: memoryContents, interpretations}));
     alert('Machine state copied to clipboard.');
 }
