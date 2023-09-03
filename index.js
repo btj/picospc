@@ -84,6 +84,8 @@ function step() {
         case 11: write(read(+ip.value + 1), read(read(read(+ip.value + 2)) + read(+ip.value + 3))); setIp(+ip.value + 4); break;
         case 12: write(read(read(+ip.value + 1)) + read(+ip.value + 2), read(read(+ip.value + 3))); setIp(+ip.value + 4); break;
         case 13: print(read(read(+ip.value + 1))); setIp(+ip.value + 2); break;
+        case 14: write(read(+ip.value + 1), read(read(+ip.value + 1)) - read(+ip.value + 2)); setIp(+ip.value + 3); break;
+        case 15: write(read(+ip.value + 1), read(read(+ip.value + 2))); setIp(+ip.value + 3); break;
     }
 }
 
@@ -102,6 +104,8 @@ function decode(address) {
         case 11: return "M[" + read(address + 1) + "] ← M[M[" + read(address + 2) + "] + " + read(address + 3) + "]; IP ← IP + 4";
         case 12: return "M[M[" + read(address + 1) + "] + " + read(address + 2) + "] ← M[" + read(address + 3) + "]; IP ← IP + 4";
         case 13: return "print M[" + read(address + 1) + "]; IP ← IP + 2";
+        case 14: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] - " + read(address + 2) + "; IP ← IP + 3";
+        case 15: return "M[" + read(address + 1) + "] ← M[" + read(address + 2) + "]; IP ← IP + 3";
         default: return "(not a valid instruction)";
     }
 }
@@ -148,6 +152,12 @@ const examples = [
         ip: 2,
         memory: [20, 0, 7, 0, 6, 0, 9, 1, 0, 13, 1, 11, 0, 0, 1, 8, 2, 20, 24, 0, 10, 17, 40, 26, 30, 22, 50, 0],
         interpretations: '  I  II  I I   I            '
+    },
+    {
+        title: "Build a linked list with elements 1, 2, 3 at M[1]",
+        ip: 3,
+        memory: [30, 0, 3, 7, 2, 7, 0, 14, 0, 2, 10, 0, 2, 12, 0, 1, 1, 15, 1, 0, 5, 2, 8, 3, 0, 0, 0, 0, 0, 0],
+        interpretations: '   I  II  I  I   I  I I      '
     }
 ];
 
