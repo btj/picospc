@@ -136,7 +136,7 @@ const examples = [
         interpretations: '   I  II  I I  '
     },
     {
-        title: "Sum up M[20..27] into M[3]",
+        title: "Sum up M[20..27] into M[2]",
         ip: 4,
         memory: [20, 8, 0, 0, 7, 1, 8, 0, 9, 3, 0, 2, 2, 3, 4, 0, 5, 1, 8, 4, 1, 2, 4, 8, 16, 32, 64, 128],
         interpretations: '    I  II  I  I I I        '
