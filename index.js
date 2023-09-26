@@ -58,7 +58,7 @@ function updateArrows() {
     }
     pushArrow(ip, +ip.value);
     for (let i = 0; i < memory.length; i++)
-        if (interpretationSelects[i].selectedIndex == 2)
+        if (interpretationsList[interpretationSelects[i].selectedIndex] == interpretations.ADDRESS)
             pushArrow(memory[i], +memory[i].value);
     while (arrowsSvg.lastChild != null)
         arrowsSvg.removeChild(arrowsSvg.lastChild);
@@ -213,6 +213,27 @@ const examples = [
     }
 ];
 
+const interpretations = {
+    'NONE': {
+        letter: ' ',
+        label: '',
+        text(i) { return ' '; }
+    },
+    'INSTRUCTION': {
+        letter: 'I',
+        label: 'interpreted as an instruction means',
+        text(i) { return decode(i); }
+    },
+    'ADDRESS': {
+        letter: 'A',
+        label: 'interpreted as an address means',
+        text(i) { return '(see arrow)'; }
+    }
+};
+const interpretationsList = Object.values(interpretations);
+interpretationsList.forEach((i, index) => { i.index = index; });
+const interpretationsByLetter = new Map(interpretationsList.map(i => [i.letter, i]));
+
 const memorySize = 30;
 
 function setState(state) {
@@ -223,19 +244,10 @@ function setState(state) {
     for (let i = state.memory.length; i < memorySize; i++)
         write(i, 0);
     for (let i = 0; i < state.memory.length; i++) {
-        if (state.interpretations[i] == 'I') {
-            interpretationSelects[i].selectedIndex = 1;
-            interpretationSelects[i].style.visibility = 'visible';
-            interpretationSpans[i].innerText = decode(i);
-        } else if (state.interpretations[i] == 'A') {
-            interpretationSelects[i].selectedIndex = 2;
-            interpretationSelects[i].style.visibility = 'visible';
-            interpretationSpans[i].innerText = '(see arrow)';
-        } else {
-            interpretationSelects[i].selectedIndex = 0;
-            interpretationSelects[i].style.visibility = 'hidden';
-            interpretationSpans[i].innerText = '';
-        }
+        const interpretation = interpretationsByLetter[state.interpretations[i]];
+        interpretationSelects[i].selectedIndex = interpretation.index;
+        interpretationSelects[i].style.visibility = (interpretation.index == 0 ? 'hidden' : 'visible');
+        interpretationSpans[i].innerText = interpretation.text(i);
     }
     for (let i = state.memory.length; i < memorySize; i++) {
         interpretationSelects[i].selectedIndex = 0;
@@ -253,20 +265,13 @@ function init() {
     for (let i = 0; i < memorySize; i++) {
         const input = h('input', {value: '0'});
         memory.push(input);
-        const interpretationSelect = h('select', {style: 'visibility: hidden'}, [
-            new Option(),
-            new Option('interpreted as an instruction means'),
-            new Option('interpreted as an address means')
-        ]);
+        const interpretationSelect = h('select', {style: 'visibility: hidden'},
+            interpretationsList.map(interpretation => new Option(interpretation.label)));
         interpretationSelects.push(interpretationSelect);
         const interpretationSpan = h('span');
         interpretationSpans.push(interpretationSpan);
         function updateView() {
-            switch (interpretationSelect.selectedIndex) {
-                case 0: interpretationSpan.innerText = ''; break;
-                case 1: interpretationSpan.innerText = decode(i); break;
-                case 2: interpretationSpan.innerText = '(see arrow)'; break;
-            }
+            interpretationSpan.innerText = interpretationsList[interpretationSelect.selectedIndex].text(i);
             updateArrows();
         }
         interpretationSelect.onchange = updateView;
@@ -294,10 +299,7 @@ function init() {
 
 async function save() {
     const memoryContents = memory.map(elem => elem.value);
-    const interpretations = interpretationSelects.map(elem =>
-        elem.selectedIndex == 1 ? 'I' :
-        elem.selectedIndex == 2 ? 'A' :
-        ' ').join('');
+    const interpretations = interpretationSelects.map(elem => interpretationsList[elem.selectedIndex].letter).join('');
     await navigator.clipboard.writeText(JSON.stringify({ip: +ip.value, memory: memoryContents, interpretations}));
     alert('Machine state copied to clipboard.');
 }
