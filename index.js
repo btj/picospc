@@ -1,3 +1,78 @@
+function asBinaryString(n, x) {
+    let result = '';
+    while (n > 0) {
+        result = ((x & 1) != 0 ? '1' : '0') + result;
+        x = x >> 1;
+        n--;
+    }
+    return result;
+}
+
+function decodeFloat8(x) {
+    const isNegative = (x & 0x80) != 0;
+    const rawExponent = (x & 0x7f) >> 3;
+    const exponent = rawExponent - 7;
+    const rawMantissa = x & 0x07;
+    const bits = (isNegative ? '1' : '0') + ' ' + asBinaryString(4, rawExponent) + ' ' + asBinaryString(3, rawMantissa);
+    const sign = isNegative ? '-' : '';
+    let meaning;
+    if (rawExponent == 15) {
+        if (rawMantissa == 0)
+            meaning = sign + '∞';
+        else
+            meaning = '(Not-a-Number)';
+    } else if (rawExponent == 0) {
+        meaning = sign + '0.' + asBinaryString(3, rawMantissa) + '<sub>2</sub>×2<sup>-6</sup>';
+        meaning += ' = ' + sign + (rawMantissa / 8) + '×2<sup>-6</sup>';
+        meaning += ' = ' + sign + (rawMantissa / 8) * Math.pow(2, -6);
+    } else {
+        meaning = sign + '1.' + asBinaryString(3, rawMantissa) + '<sub>2</sub>×2<sup>' + asBinaryString(4, rawExponent) + '<sub>2</sub> - 7</sup>';
+        meaning += ' = ' + sign + (1 + rawMantissa / 8) + '×2<sup>' + exponent + '</sup>';
+        meaning += ' = ' + sign + (1 + rawMantissa / 8) * Math.pow(2, exponent);
+    }
+    return bits + ' = ' + meaning;
+}
+
+function valueOfPositiveFloat8(x) {
+    if (x > 120)
+        return Number.NaN;
+    else if (x == 120)
+        return Number.POSITIVE_INFINITY;
+    else if (x < 8) // denormal
+        return x / 8 * Math.pow(2, -6);
+    else
+        return (1 + ((x & 7) / 8)) * Math.pow(2, (x >> 3) - 7);
+}
+
+function valueOfFloat8(x) {
+    if (x <= 127)
+        return valueOfPositiveFloat8(x);
+    else
+        return -valueOfPositiveFloat8(x - 128);
+}
+
+function float8OfPositiveValue(x) {
+    if (Number.isNaN(x))
+        return 127;
+    if (x > 31/16 * 128)
+        return 120;
+    const exponent = Math.floor(Math.log2(x));
+    if (exponent < -6)
+        return Math.round(x * 512);
+    else
+        return (exponent + 7) * 8 + Math.round((x / Math.pow(2, exponent) - 1) * 8);
+}
+
+function float8OfValue(x) {
+    if (x < 0)
+        return float8OfPositiveValue(-x) + 128;
+    return float8OfPositiveValue(x);
+}
+
+function addFloat8(x, y) {
+    return float8OfValue(valueOfFloat8(x) + valueOfFloat8(y));
+}
+
 function h(tag, attrs, elems) {
     if (elems === undefined && attrs instanceof Array) {
         elems = attrs;
@@ -28,7 +103,7 @@ function read(address) {
 
 function updateInterpretationSpans() {
     for (let i = 0; i < memory.length; i++)
-        interpretationSpans[i].innerText = interpretationsList[interpretationSelects[i].selectedIndex].text(i);
+        interpretationSpans[i].innerHTML = interpretationsList[interpretationSelects[i].selectedIndex].html(i);
     updateArrows();
 }
 
@@ -145,6 +220,7 @@ function step() {
         case 13: print(read(read(+ip.value + 1))); setIp(+ip.value + 2); break;
         case 14: write(read(+ip.value + 1), read(read(+ip.value + 1)) - read(+ip.value + 2)); setIp(+ip.value + 3); break;
         case 15: write(read(+ip.value + 1), read(read(+ip.value + 2))); setIp(+ip.value + 3); break;
+        case 16: write(read(+ip.value + 1), addFloat8(read(read(+ip.value + 1)), read(read(+ip.value + 2)))); setIp(+ip.value + 3); break;
     }
 }
 
@@ -165,6 +241,7 @@ function decode(address) {
         case 13: return "print M[" + read(address + 1) + "]; IP ← IP + 2";
         case 14: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] - " + read(address + 2) + "; IP ← IP + 3";
         case 15: return "M[" + read(address + 1) + "] ← M[" + read(address + 2) + "]; IP ← IP + 3";
+        case 16: return "M[" + read(address + 1) + "] ← M[" + read(address + 1) + "] +<sub>float8</sub> M[" + read(address + 2) + "]; IP ← IP + 3";
         default: return "(not a valid instruction)";
     }
 }
@@ -213,6 +290,12 @@ const examples = [
         interpretations: 'A  I  II  I  I  I I I CCCCC'
     },
     {
+        title: "Double a float8 value forever",
+        ip: 1,
+        memory: [1, 16, 0, 0, 8, 1],
+        interpretations: 'FI  I '
+    },
+    {
         title: "Print the linked list at M[0]",
         ip: 2,
         memory: [20, 0, 7, 0, 6, 0, 9, 1, 0, 13, 1, 11, 0, 0, 1, 8, 2, 20, 24, 0, 10, 17, 40, 26, 30, 22, 50, 0],
@@ -226,21 +309,25 @@ const examples = [
     }
 ];
 
+function textHtml(text) {
+    return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
+}
+
 const interpretations = {
     'NONE': {
         letter: ' ',
         label: '',
-        text(i) { return ' '; }
+        html(i) { return ' '; }
     },
     'INSTRUCTION': {
         letter: 'I',
         label: 'interpreted as an instruction means',
-        text(i) { return decode(i); }
+        html(i) { return decode(i); }
     },
     'ADDRESS': {
         letter: 'A',
         label: 'interpreted as an address means',
-        text(i) { return '(see arrow)'; }
+        html(i) { return '(see arrow)'; }
     },
     'CHARACTER': {
         letter: 'C',
@@ -255,7 +342,13 @@ const interpretations = {
                 return '(space character)';
             else
                 return String.fromCharCode(c);
-        }
+        },
+        html(i) { return textHtml(this.text(i)); }
+    },
+    'FLOAT8': {
+        letter: 'F',
+        label: 'interpreted as a float8 means',
+        html(i) { return decodeFloat8(read(i)); }
     }
 };
 const interpretationsList = Object.values(interpretations);
@@ -275,7 +368,7 @@ function setState(state) {
         const interpretation = interpretationsByLetter.get(state.interpretations[i]);
         interpretationSelects[i].selectedIndex = interpretation.index;
         interpretationSelects[i].style.visibility = (interpretation.index == 0 ? 'hidden' : 'visible');
-        interpretationSpans[i].innerText = interpretation.text(i);
+        interpretationSpans[i].innerHTML = interpretation.html(i);
     }
     for (let i = state.memory.length; i < memorySize; i++) {
         interpretationSelects[i].selectedIndex = 0;
@@ -299,11 +392,11 @@ function init() {
         const interpretationSpan = h('span');
         interpretationSpans.push(interpretationSpan);
         function updateView() {
-            interpretationSpan.innerText = interpretationsList[interpretationSelect.selectedIndex].text(i);
+            interpretationSpan.innerHTML = interpretationsList[interpretationSelect.selectedIndex].html(i);
             updateArrows();
         }
         interpretationSelect.onchange = updateView;
-        const interpretationCell = h('td', [input, interpretationSelect, interpretationSpan]);
+        const interpretationCell = h('td', [input, interpretationSelect, ' ', interpretationSpan]);
         interpretationCell.onmouseover = () => { interpretationSelect.style.visibility = 'visible'; };
         interpretationCell.onmouseout = () => {
             if (interpretationSelect.selectedIndex == 0)
