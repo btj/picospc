@@ -26,8 +26,15 @@ function read(address) {
     return +memory[address].value;
 }
 
+function updateInterpretationSpans() {
+    for (let i = 0; i < memory.length; i++)
+        interpretationSpans[i].innerText = interpretationsList[interpretationSelects[i].selectedIndex].text(i);
+    updateArrows();
+}
+
 function write(address, value) {
     memory[address].value = value;
+    updateInterpretationSpans();
 }
 
 function addPoint(points, x, y) {
@@ -200,6 +207,12 @@ const examples = [
         interpretations: 'A  I  II  I I  I I I         '
     },
     {
+        title: "Convert M[22..26] to upper case",
+        ip: 3,
+        memory: [22, 5, 0, 7, 1, 7, 0, 9, 2, 0, 14, 2, 32, 10, 0, 2, 4, 0, 5, 1, 8, 3, 104, 101, 108, 108, 111],
+        interpretations: 'A  I  II  I  I  I I I CCCCC'
+    },
+    {
         title: "Print the linked list at M[0]",
         ip: 2,
         memory: [20, 0, 7, 0, 6, 0, 9, 1, 0, 13, 1, 11, 0, 0, 1, 8, 2, 20, 24, 0, 10, 17, 40, 26, 30, 22, 50, 0],
@@ -228,6 +241,21 @@ const interpretations = {
         letter: 'A',
         label: 'interpreted as an address means',
         text(i) { return '(see arrow)'; }
+    },
+    'CHARACTER': {
+        letter: 'C',
+        label: 'interpreted as a character means',
+        text(i) {
+            const c = read(i);
+            if (c < 32 || c == 127)
+                return '(control character)';
+            else if (c > 127)
+                return '(non-ASCII character)';
+            else if (c == 32)
+                return '(space character)';
+            else
+                return String.fromCharCode(c);
+        }
     }
 };
 const interpretationsList = Object.values(interpretations);
