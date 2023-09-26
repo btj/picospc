@@ -17,9 +17,7 @@ function h(tag, attrs, elems) {
 }
 
 let ip = null;
-let ipLine = null;
-let ipLineArrowhead = null;
-let ipLineSvg = null;
+let arrowsSvg = null;
 let memory = [];
 let interpretationSelects = [];
 let interpretationSpans = [];
@@ -33,7 +31,7 @@ function write(address, value) {
 }
 
 function addPoint(points, x, y) {
-    const point = ipLineSvg.createSVGPoint();
+    const point = arrowsSvg.createSVGPoint();
     point.x = x;
     point.y = y;
     points.appendItem(point);
@@ -44,20 +42,74 @@ function addPoints(points, xys) {
         addPoint(points, xys[i], xys[i + 1]);
 }
 
+const svgns = "http://www.w3.org/2000/svg";
+
+const arrowHeadsOffset = 5;
+const arrowHeadWidth = 10;
+const arrowsOffset = 5;
+const leftMargin = 5;
+const arrowColors = ['black', 'navy', 'purple', 'teal', 'olive', 'maroon', 'green', 'blueviolet', 'brown', 'darkgoldenrod', 'darkslategray', 'gray']
+
+function updateArrows() {
+    const arrows = [];
+    function pushArrow(from, to) {
+        if (0 <= to && to < memory.length)
+            arrows.push([from, to]);
+    }
+    pushArrow(ip, +ip.value);
+    for (let i = 0; i < memory.length; i++)
+        if (interpretationSelects[i].selectedIndex == 2)
+            pushArrow(memory[i], +memory[i].value);
+    while (arrowsSvg.lastChild != null)
+        arrowsSvg.removeChild(arrowsSvg.lastChild);
+    if (arrows.length == 0)
+        return;
+    let maxNbArrowsArrivingAtSamePlace = 1;
+    let arrowsArrivingAt = new Map();
+    for (let i = 0; i < arrows.length; i++) {
+        const [from, to] = arrows[i];
+        if (arrowsArrivingAt.has(to)) {
+            arrowsArrivingAt.set(to, arrowsArrivingAt.get(to) + 1);
+            if (maxNbArrowsArrivingAtSamePlace < arrowsArrivingAt.get(to))
+                maxNbArrowsArrivingAtSamePlace = arrowsArrivingAt.get(to);
+        } else
+            arrowsArrivingAt.set(to, 1);
+    }
+    const arrowsSvgWidth = arrowHeadWidth + (maxNbArrowsArrivingAtSamePlace - 1) * arrowHeadsOffset + arrows.length * arrowsOffset + leftMargin;
+    arrowsSvg.width.baseVal.newValueSpecifiedUnits(5, arrowsSvgWidth);
+    const arrowsSvgRect = arrowsSvg.getBoundingClientRect();
+    const precedingArrowsArrivingAt = new Map();
+    for (let i = 0; i < arrows.length; i++) {
+        const [from, to] = arrows[i];
+        let nbPrecedingArrowsArrivingInSamePlace = precedingArrowsArrivingAt.has(to) ? precedingArrowsArrivingAt.get(to) : 0;
+        if (precedingArrowsArrivingAt.has(to))
+            precedingArrowsArrivingAt.set(to, precedingArrowsArrivingAt.get(to) + 1);
+        else
+            precedingArrowsArrivingAt.set(to, 1);
+        const fromRect = from.getBoundingClientRect();
+        const fromY = (fromRect.top + fromRect.bottom) / 2 - arrowsSvgRect.top;
+        const toRect = memory[to].getBoundingClientRect();
+        const toY = (toRect.top + toRect.bottom) / 2 - arrowsSvgRect.top;
+        const polyline = document.createElementNS(svgns, 'polyline');
+        polyline.style = 'fill:none;stroke:' + arrowColors[(i % arrowColors.length)] + ';stroke-width:3';
+        const arrowX = leftMargin + i * arrowsOffset;
+        const arrowHeadLeft = arrowsSvgWidth - arrowHeadWidth - nbPrecedingArrowsArrivingInSamePlace * arrowHeadsOffset;
+        addPoints(polyline.points, [arrowsSvgWidth, fromY, arrowX, fromY, arrowX, toY, arrowHeadLeft, toY]);
+        const polygon = document.createElementNS(svgns, 'polygon');
+        polygon.style = 'fill:' + arrowColors[(i % arrowColors.length)];
+        addPoints(polygon.points, [arrowHeadLeft + arrowHeadWidth, toY, arrowHeadLeft, toY - 5, arrowHeadLeft, toY + 5]);
+        arrowsSvg.appendChild(polyline);
+        arrowsSvg.appendChild(polygon);
+
+        const maxY = Math.max(fromY, toY) + 5;
+        if (arrowsSvgRect.bottom - arrowsSvgRect.top < maxY)
+            arrowsSvg.height.baseVal.newValueSpecifiedUnits(5, maxY);
+    }
+}
+
 function setIp(address) {
     ip.value = address;
-    const ipRect = ip.getBoundingClientRect();
-    const memRect = memory[address].getBoundingClientRect();
-    const ipLineSvgRect = ipLineSvg.getBoundingClientRect();
-    const ipY = (ipRect.top + ipRect.bottom) / 2 - ipLineSvgRect.top;
-    const memY = (memRect.top + memRect.bottom) / 2 - ipLineSvgRect.top;
-    ipLine.points.clear();
-    addPoints(ipLine.points, [50, ipY, 5, ipY, 5, memY, 40, memY]);
-    ipLineArrowhead.points.clear();
-    addPoints(ipLineArrowhead.points, [50, memY, 40, memY - 5, 40, memY + 5]);
-
-    if (ipLineSvgRect.bottom - ipLineSvgRect.top < memY + 5)
-        ipLineSvg.height.baseVal.newValueSpecifiedUnits(5, memY + 5);
+    updateArrows();
 }
 
 function print(text) {
@@ -139,32 +191,32 @@ const examples = [
         title: "Sum up M[20..27] into M[2]",
         ip: 4,
         memory: [20, 8, 0, 0, 7, 1, 8, 0, 9, 3, 0, 2, 2, 3, 4, 0, 5, 1, 8, 4, 1, 2, 4, 8, 16, 32, 64, 128],
-        interpretations: '    I  II  I  I I I        '
+        interpretations: 'A   I  II  I  I I I        '
     },
     {
         title: "Increment M[21..28]",
         ip: 3,
         memory: [21, 8, 0, 7, 1, 7, 0, 9, 2, 0, 4, 2, 10, 0, 2, 4, 0, 5, 1, 8, 3, 10, 20, 30, 40, 50, 60, 70, 80],
-        interpretations: '   I  II  I I  I I I         '
+        interpretations: 'A  I  II  I I  I I I         '
     },
     {
         title: "Print the linked list at M[0]",
         ip: 2,
         memory: [20, 0, 7, 0, 6, 0, 9, 1, 0, 13, 1, 11, 0, 0, 1, 8, 2, 20, 24, 0, 10, 17, 40, 26, 30, 22, 50, 0],
-        interpretations: '  I  II  I I   I            '
+        interpretations: 'A I  II  I I   I            '
     },
     {
         title: "Build a linked list with elements 1, 2, 3 at M[1]",
         ip: 3,
         memory: [30, 0, 3, 7, 2, 7, 0, 14, 0, 2, 10, 0, 2, 12, 0, 1, 1, 15, 1, 0, 5, 2, 8, 3, 0, 0, 0, 0, 0, 0],
-        interpretations: '   I  II  I  I   I  I I      '
+        interpretations: 'A  I  II  I  I   I  I I      '
     }
 ];
 
 const memorySize = 30;
 
 function setState(state) {
-    setIp(state.ip);
+    ip.value = state.ip;
     for (let i = 0; i < state.memory.length; i++) {
         write(i, state.memory[i]);
     }
@@ -190,13 +242,13 @@ function setState(state) {
         interpretationSelects[i].style.visibility = 'hidden';
         interpretationSpans[i].innerText = '';
     }
+    updateArrows();
 }
 
 function init() {
     ip = document.getElementById('ip');
-    ipLine = document.getElementById('ipLine');
-    ipLineArrowhead = document.getElementById('ipLineArrowhead');
-    ipLineSvg = document.getElementById('ipLineSvg');
+    ip.onchange = updateArrows;
+    arrowsSvg = document.getElementById('arrowsSvg');
     const registersTable = document.getElementById('registers');
     for (let i = 0; i < memorySize; i++) {
         const input = h('input', {value: '0'});
@@ -209,13 +261,15 @@ function init() {
         interpretationSelects.push(interpretationSelect);
         const interpretationSpan = h('span');
         interpretationSpans.push(interpretationSpan);
-        interpretationSelect.onchange = () => {
+        function updateView() {
             switch (interpretationSelect.selectedIndex) {
                 case 0: interpretationSpan.innerText = ''; break;
                 case 1: interpretationSpan.innerText = decode(i); break;
-                case 2: interpretationSpan.innerText = '(see arrow)';
+                case 2: interpretationSpan.innerText = '(see arrow)'; break;
             }
-        };
+            updateArrows();
+        }
+        interpretationSelect.onchange = updateView;
         const interpretationCell = h('td', [input, interpretationSelect, interpretationSpan]);
         interpretationCell.onmouseover = () => { interpretationSelect.style.visibility = 'visible'; };
         interpretationCell.onmouseout = () => {
@@ -223,6 +277,7 @@ function init() {
                 interpretationSelect.style.visibility = 'hidden';
         };
         registersTable.appendChild(h('tr', [h('td', {align: 'right'}, ['M[' + i + ']']), interpretationCell]));
+        input.onchange = updateView;
     }
     setIp(0);
     const examplesSelect = document.getElementById('examples');
