@@ -244,7 +244,7 @@ function setState(state) {
     for (let i = state.memory.length; i < memorySize; i++)
         write(i, 0);
     for (let i = 0; i < state.memory.length; i++) {
-        const interpretation = interpretationsByLetter[state.interpretations[i]];
+        const interpretation = interpretationsByLetter.get(state.interpretations[i]);
         interpretationSelects[i].selectedIndex = interpretation.index;
         interpretationSelects[i].style.visibility = (interpretation.index == 0 ? 'hidden' : 'visible');
         interpretationSpans[i].innerText = interpretation.text(i);
