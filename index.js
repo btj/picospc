@@ -91,6 +91,11 @@ function h(tag, attrs, elems) {
     return result;
 }
 
+const Notation = {
+    BINARY: 1,
+    DECIMAL: 0
+};
+let notationSelect = null;
 let ip = null;
 let arrowsSvg = null;
 let memory = [];
@@ -108,7 +113,7 @@ function updateInterpretationSpans() {
 }
 
 function write(address, value) {
-    setInputElementValue(memory[address], value);
+    setRegisterValue(memory[address], value);
     updateInterpretationSpans();
 }
 
@@ -189,8 +194,10 @@ function updateArrows() {
     }
 }
 
+
+
 function setIp(address) {
-    setInputElementValue(ip, address);
+    setRegisterValue(ip, address);
     updateArrows();
 }
 
@@ -358,7 +365,7 @@ const interpretationsByLetter = new Map(interpretationsList.map(i => [i.letter, 
 const memorySize = 30;
 
 function setState(state) {
-    setInputElementValue(ip, state.ip);
+    setRegisterValue(ip, state.ip);
     for (let i = 0; i < state.memory.length; i++) {
         write(i, state.memory[i]);
     }
@@ -381,6 +388,13 @@ function setState(state) {
 function setInputElementValue(element, value) {
     element.value = value;
     element.committedValue = value;
+}
+
+function setRegisterValue(element, value) {
+    if (notationSelect.selectedIndex == Notation.BINARY)
+        setInputElementValue(element, '0b' + asBinaryString(8, value));
+    else
+        setInputElementValue(element, '' + +value);
 }
 
 function validateInputElement(element, getErrorMessage, oncommit) {
@@ -425,22 +439,28 @@ function validateRegister(element, oncommit) {
         return null;
     }, value => {
         if (/^('.'|".")$/.test(value))
-            setInputElementValue(element, value.charCodeAt(1) & 0xff);
+            setRegisterValue(element, value.charCodeAt(1) & 0xff);
         else if (value.includes('.'))
-            setInputElementValue(element, float8OfValue(+value));
-        else if (value != (value & 0xff))
-            setInputElementValue(element, value & 0xff);
+            setRegisterValue(element, float8OfValue(+value));
+        else
+            setRegisterValue(element, value & 0xff);
         oncommit();
     });
 }
 
 function init() {
+    notationSelect = document.getElementById('notation');
+    notationSelect.onchange = () => {
+        setIp(ip.value);
+        for (let i = 0; i < memory.length; i++)
+            setRegisterValue(memory[i], memory[i].value);
+    };
     ip = document.getElementById('ip');
     validateRegister(ip, updateArrows);
     arrowsSvg = document.getElementById('arrowsSvg');
     const registersTable = document.getElementById('registers');
     for (let i = 0; i < memorySize; i++) {
-        const input = h('input', {value: '0'});
+        const input = h('input', {value: '0', size: 10});
         memory.push(input);
         const interpretationSelect = h('select', {style: 'visibility: hidden'},
             interpretationsList.map(interpretation => new Option(interpretation.label)));
