@@ -98,6 +98,7 @@ const Notation = {
 let notationSelect = null;
 let ip = null;
 let arrowsSvg = null;
+let registersTable = null;
 let memory = [];
 let interpretationSelects = [];
 let interpretationSpans = [];
@@ -362,14 +363,12 @@ const interpretationsList = Object.values(interpretations);
 interpretationsList.forEach((i, index) => { i.index = index; });
 const interpretationsByLetter = new Map(interpretationsList.map(i => [i.letter, i]));
 
-const memorySize = 30;
-
 function setState(state) {
     setRegisterValue(ip, state.ip);
     for (let i = 0; i < state.memory.length; i++) {
         write(i, state.memory[i]);
     }
-    for (let i = state.memory.length; i < memorySize; i++)
+    for (let i = state.memory.length; i < memory.length; i++)
         write(i, 0);
     for (let i = 0; i < state.memory.length; i++) {
         const interpretation = interpretationsByLetter.get(state.interpretations[i]);
@@ -377,7 +376,7 @@ function setState(state) {
         interpretationSelects[i].style.visibility = (interpretation.index == 0 ? 'hidden' : 'visible');
         interpretationSpans[i].innerHTML = interpretation.html(i);
     }
-    for (let i = state.memory.length; i < memorySize; i++) {
+    for (let i = state.memory.length; i < memory.length; i++) {
         interpretationSelects[i].selectedIndex = 0;
         interpretationSelects[i].style.visibility = 'hidden';
         interpretationSpans[i].innerText = '';
@@ -448,6 +447,46 @@ function validateRegister(element, oncommit) {
     });
 }
 
+function addRegister() {
+    const i = memory.length;
+    const input = h('input', {value: '0', size: 10});
+    memory.push(input);
+    const interpretationSelect = h('select', {style: 'visibility: hidden'},
+        interpretationsList.map(interpretation => new Option(interpretation.label)));
+    interpretationSelects.push(interpretationSelect);
+    const interpretationSpan = h('span');
+    interpretationSpans.push(interpretationSpan);
+    function updateView() {
+        interpretationSpan.innerHTML = interpretationsList[interpretationSelect.selectedIndex].html(i);
+        updateArrows();
+    }
+    interpretationSelect.onchange = updateView;
+    const interpretationCell = h('td', [input, interpretationSelect, ' ', interpretationSpan]);
+    interpretationCell.onmouseover = () => { interpretationSelect.style.visibility = 'visible'; };
+    interpretationCell.onmouseout = () => {
+        if (interpretationSelect.selectedIndex == 0)
+            interpretationSelect.style.visibility = 'hidden';
+    };
+    registersTable.appendChild(h('tr', [h('td', {align: 'right'}, ['M[' + i + ']']), interpretationCell]));
+    validateRegister(input, updateView);
+}
+
+function addAddMoreRegistersButton() {
+    const button = h('button', ['Add more registers']);
+    button.style.visibility = 'hidden';
+    const cell = h('td', [button]);
+    const row = h('tr', [h('td'), cell]);
+    cell.onmouseover = () => { button.style.visibility = 'visible'; };
+    cell.onmouseout = () => { button.style.visibility = 'hidden'; };
+    button.onclick = () => {
+        registersTable.removeChild(row);
+        for (let i = 0; i < 10; i++)
+            addRegister();
+        addAddMoreRegistersButton();
+    };
+    registersTable.appendChild(row);
+}
+
 function init() {
     notationSelect = document.getElementById('notation');
     notationSelect.onchange = () => {
@@ -458,29 +497,10 @@ function init() {
     ip = document.getElementById('ip');
     validateRegister(ip, updateArrows);
     arrowsSvg = document.getElementById('arrowsSvg');
-    const registersTable = document.getElementById('registers');
-    for (let i = 0; i < memorySize; i++) {
-        const input = h('input', {value: '0', size: 10});
-        memory.push(input);
-        const interpretationSelect = h('select', {style: 'visibility: hidden'},
-            interpretationsList.map(interpretation => new Option(interpretation.label)));
-        interpretationSelects.push(interpretationSelect);
-        const interpretationSpan = h('span');
-        interpretationSpans.push(interpretationSpan);
-        function updateView() {
-            interpretationSpan.innerHTML = interpretationsList[interpretationSelect.selectedIndex].html(i);
-            updateArrows();
-        }
-        interpretationSelect.onchange = updateView;
-        const interpretationCell = h('td', [input, interpretationSelect, ' ', interpretationSpan]);
-        interpretationCell.onmouseover = () => { interpretationSelect.style.visibility = 'visible'; };
-        interpretationCell.onmouseout = () => {
-            if (interpretationSelect.selectedIndex == 0)
-                interpretationSelect.style.visibility = 'hidden';
-        };
-        registersTable.appendChild(h('tr', [h('td', {align: 'right'}, ['M[' + i + ']']), interpretationCell]));
-        validateRegister(input, updateView);
-    }
+    registersTable = document.getElementById('registers');
+    for (let i = 0; i < 30; i++)
+        addRegister();
+    addAddMoreRegistersButton();
     setIp(0);
     const examplesSelect = document.getElementById('examples');
     for (let example_ of examples) {
