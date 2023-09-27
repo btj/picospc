@@ -108,7 +108,7 @@ function updateInterpretationSpans() {
 }
 
 function write(address, value) {
-    memory[address].value = value;
+    setInputElementValue(memory[address], value);
     updateInterpretationSpans();
 }
 
@@ -190,7 +190,7 @@ function updateArrows() {
 }
 
 function setIp(address) {
-    ip.value = address;
+    setInputElementValue(ip, address);
     updateArrows();
 }
 
@@ -358,7 +358,7 @@ const interpretationsByLetter = new Map(interpretationsList.map(i => [i.letter, 
 const memorySize = 30;
 
 function setState(state) {
-    ip.value = state.ip;
+    setInputElementValue(ip, state.ip);
     for (let i = 0; i < state.memory.length; i++) {
         write(i, state.memory[i]);
     }
@@ -378,9 +378,57 @@ function setState(state) {
     updateArrows();
 }
 
+function setInputElementValue(element, value) {
+    element.value = value;
+    element.committedValue = value;
+}
+
+function validateInputElement(element, getErrorMessage, oncommit) {
+    let lastMsgTime = null;
+    element.committedValue = element.value;
+    element.onchange = () => {
+        const msg = getErrorMessage(element.value);
+        if (msg != null) {
+            if (lastMsgTime == null || Date.now() - lastMsgTime > 500) {
+                lastMsgTime = Date.now();
+                alert(msg);
+                lastMsgTime = Date.now();
+            }
+        } else {
+            element.committedValue = element.value;
+            oncommit(element.value);
+        }
+    };
+    element.onblur = () => {
+        if (document.activeElement === element)
+            return;
+        const msg = getErrorMessage(element.value);
+        if (msg != null) {
+            element.focus();
+            if (lastMsgTime == null || Date.now() - lastMsgTime > 500) {
+                lastMsgTime = Date.now();
+                alert(msg);
+                lastMsgTime = Date.now();
+            }
+        }
+    };
+    element.onkeydown = e => {
+        if (e.key == 'Escape')
+            element.value = element.committedValue;
+    };
+}
+
+function validateRegister(element, oncommit) {
+    validateInputElement(element, value => {
+        if (value != +value)
+            return value + ': number expected';
+        return null;
+    }, oncommit);
+}
+
 function init() {
     ip = document.getElementById('ip');
-    ip.onchange = updateArrows;
+    validateRegister(ip, updateArrows);
     arrowsSvg = document.getElementById('arrowsSvg');
     const registersTable = document.getElementById('registers');
     for (let i = 0; i < memorySize; i++) {
@@ -403,7 +451,7 @@ function init() {
                 interpretationSelect.style.visibility = 'hidden';
         };
         registersTable.appendChild(h('tr', [h('td', {align: 'right'}, ['M[' + i + ']']), interpretationCell]));
-        input.onchange = updateView;
+        validateRegister(input, updateView);
     }
     setIp(0);
     const examplesSelect = document.getElementById('examples');
