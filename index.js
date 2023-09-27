@@ -420,10 +420,18 @@ function validateInputElement(element, getErrorMessage, oncommit) {
 
 function validateRegister(element, oncommit) {
     validateInputElement(element, value => {
-        if (value != +value)
+        if (value != +value && !/^('.'|".")$/.test(value))
             return value + ': number expected';
         return null;
-    }, oncommit);
+    }, value => {
+        if (/^('.'|".")$/.test(value))
+            setInputElementValue(element, value.charCodeAt(1) & 0xff);
+        else if (value.includes('.'))
+            setInputElementValue(element, float8OfValue(+value));
+        else if (value != (value & 0xff))
+            setInputElementValue(element, value & 0xff);
+        oncommit();
+    });
 }
 
 function init() {
